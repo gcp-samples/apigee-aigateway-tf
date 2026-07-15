@@ -282,6 +282,170 @@ resource "google_apigee_data_collector" "collectors" {
   type              = each.value.type
 }
 
+resource "terraform_data" "custom_reports" {
+  # Depend on collectors so they exist before we create reports referencing them
+  depends_on = [google_apigee_data_collector.collectors]
+
+  input = {
+    org_name = var.project_id
+  }
+
+  provisioner "local-exec" {
+    command = <<EOT
+      ACCESS_TOKEN=$(gcloud auth application-default print-access-token 2>/dev/null)
+      if [ -z "$ACCESS_TOKEN" ]; then
+        echo "Error: Failed to obtain access token."
+        exit 1
+      fi
+
+      # Report 1: AI Model Usage and Latency Report
+      HTTP_STATUS_1=$(curl -s -o /dev/null -w "%%{http_code}" -X GET \
+        "https://apigee.googleapis.com/v1/organizations/${self.input.org_name}/reports/ai_model_usage_latency" \
+        -H "Authorization: Bearer $ACCESS_TOKEN")
+
+      PAYLOAD_1='{
+        "name": "ai_model_usage_latency",
+        "displayName": "AI Model Usage and Latency",
+        "chartType": "col",
+        "timeUnit": "hour",
+        "metrics": [
+          {"name": "dc_ai_total_token_count", "function": "sum"},
+          {"name": "dc_ai_time_first_token", "function": "avg"},
+          {"name": "message_count", "function": "sum"}
+        ],
+        "dimensions": ["apiproxy", "dc_ai_model", "dc_ai_response_type"]
+      }'
+
+      if [ "$HTTP_STATUS_1" -eq 200 ]; then
+        echo "Report ai_model_usage_latency already exists. Updating..."
+        curl -s -X PUT "https://apigee.googleapis.com/v1/organizations/${self.input.org_name}/reports/ai_model_usage_latency" \
+          -H "Authorization: Bearer $ACCESS_TOKEN" \
+          -H "Content-Type: application/json; charset=utf-8" \
+          -d "$PAYLOAD_1"
+      else
+        echo "Report ai_model_usage_latency not found. Creating..."
+        curl -s -X POST "https://apigee.googleapis.com/v1/organizations/${self.input.org_name}/reports" \
+          -H "Authorization: Bearer $ACCESS_TOKEN" \
+          -H "Content-Type: application/json; charset=utf-8" \
+          -d "$PAYLOAD_1"
+      fi
+
+      # Report 2: AI Cost Center Allocation Report
+      HTTP_STATUS_2=$(curl -s -o /dev/null -w "%%{http_code}" -X GET \
+        "https://apigee.googleapis.com/v1/organizations/${self.input.org_name}/reports/ai_cost_center_allocation" \
+        -H "Authorization: Bearer $ACCESS_TOKEN")
+
+      PAYLOAD_2='{
+        "name": "ai_cost_center_allocation",
+        "displayName": "AI Cost Center Allocation",
+        "chartType": "col",
+        "timeUnit": "day",
+        "metrics": [
+          {"name": "dc_ai_total_token_count", "function": "sum"},
+          {"name": "dc_ai_prompt_token_count", "function": "sum"},
+          {"name": "dc_ai_response_token_count", "function": "sum"}
+        ],
+        "dimensions": ["dc_ai_cost_center", "dc_ai_model"]
+      }'
+
+      if [ "$HTTP_STATUS_2" -eq 200 ]; then
+        echo "Report ai_cost_center_allocation already exists. Updating..."
+        curl -s -X PUT "https://apigee.googleapis.com/v1/organizations/${self.input.org_name}/reports/ai_cost_center_allocation" \
+          -H "Authorization: Bearer $ACCESS_TOKEN" \
+          -H "Content-Type: application/json; charset=utf-8" \
+          -d "$PAYLOAD_2"
+      else
+        echo "Report ai_cost_center_allocation not found. Creating..."
+        curl -s -X POST "https://apigee.googleapis.com/v1/organizations/${self.input.org_name}/reports" \
+          -H "Authorization: Bearer $ACCESS_TOKEN" \
+          -H "Content-Type: application/json; charset=utf-8" \
+          -d "$PAYLOAD_2"
+      fi
+
+      # Report 3: AI Token Counts by Model and User Report
+      HTTP_STATUS_3=$(curl -s -o /dev/null -w "%%{http_code}" -X GET \
+        "https://apigee.googleapis.com/v1/organizations/${self.input.org_name}/reports/ai_token_counts_by_model_user" \
+        -H "Authorization: Bearer $ACCESS_TOKEN")
+
+      PAYLOAD_3='{
+        "name": "ai_token_counts_by_model_user",
+        "displayName": "AI Token Counts by Model and User",
+        "chartType": "col",
+        "timeUnit": "day",
+        "metrics": [
+          {"name": "dc_ai_total_token_count", "function": "sum"},
+          {"name": "dc_ai_prompt_token_count", "function": "sum"},
+          {"name": "dc_ai_response_token_count", "function": "sum"}
+        ],
+        "dimensions": ["dc_ai_model", "developer_email"]
+      }'
+
+      if [ "$HTTP_STATUS_3" -eq 200 ]; then
+        echo "Report ai_token_counts_by_model_user already exists. Updating..."
+        curl -s -X PUT "https://apigee.googleapis.com/v1/organizations/${self.input.org_name}/reports/ai_token_counts_by_model_user" \
+          -H "Authorization: Bearer $ACCESS_TOKEN" \
+          -H "Content-Type: application/json; charset=utf-8" \
+          -d "$PAYLOAD_3"
+      else
+        echo "Report ai_token_counts_by_model_user not found. Creating..."
+        curl -s -X POST "https://apigee.googleapis.com/v1/organizations/${self.input.org_name}/reports" \
+          -H "Authorization: Bearer $ACCESS_TOKEN" \
+          -H "Content-Type: application/json; charset=utf-8" \
+          -d "$PAYLOAD_3"
+      fi
+
+      # Report 4: AI Time to First Token by Model Report
+      HTTP_STATUS_4=$(curl -s -o /dev/null -w "%%{http_code}" -X GET \
+        "https://apigee.googleapis.com/v1/organizations/${self.input.org_name}/reports/ai_time_to_first_token_by_model" \
+        -H "Authorization: Bearer $ACCESS_TOKEN")
+
+      PAYLOAD_4='{
+        "name": "ai_time_to_first_token_by_model",
+        "displayName": "AI Time to First Token by Model",
+        "chartType": "line",
+        "timeUnit": "hour",
+        "metrics": [
+          {"name": "dc_ai_time_first_token", "function": "avg"}
+        ],
+        "dimensions": ["dc_ai_model"]
+      }'
+
+      if [ "$HTTP_STATUS_4" -eq 200 ]; then
+        echo "Report ai_time_to_first_token_by_model already exists. Updating..."
+        curl -s -X PUT "https://apigee.googleapis.com/v1/organizations/${self.input.org_name}/reports/ai_time_to_first_token_by_model" \
+          -H "Authorization: Bearer $ACCESS_TOKEN" \
+          -H "Content-Type: application/json; charset=utf-8" \
+          -d "$PAYLOAD_4"
+      else
+        echo "Report ai_time_to_first_token_by_model not found. Creating..."
+        curl -s -X POST "https://apigee.googleapis.com/v1/organizations/${self.input.org_name}/reports" \
+          -H "Authorization: Bearer $ACCESS_TOKEN" \
+          -H "Content-Type: application/json; charset=utf-8" \
+          -d "$PAYLOAD_4"
+      fi
+    EOT
+  }
+
+  # Clean up report definitions upon destroying the Terraform state
+  provisioner "local-exec" {
+    when    = destroy
+    command = <<EOT
+      ACCESS_TOKEN=$(gcloud auth application-default print-access-token 2>/dev/null)
+      if [ -n "$ACCESS_TOKEN" ]; then
+        echo "Deleting custom report definitions..."
+        curl -s -X DELETE "https://apigee.googleapis.com/v1/organizations/${self.input.org_name}/reports/ai_model_usage_latency" \
+          -H "Authorization: Bearer $ACCESS_TOKEN"
+        curl -s -X DELETE "https://apigee.googleapis.com/v1/organizations/${self.input.org_name}/reports/ai_cost_center_allocation" \
+          -H "Authorization: Bearer $ACCESS_TOKEN"
+        curl -s -X DELETE "https://apigee.googleapis.com/v1/organizations/${self.input.org_name}/reports/ai_token_counts_by_model_user" \
+          -H "Authorization: Bearer $ACCESS_TOKEN"
+        curl -s -X DELETE "https://apigee.googleapis.com/v1/organizations/${self.input.org_name}/reports/ai_time_to_first_token_by_model" \
+          -H "Authorization: Bearer $ACCESS_TOKEN"
+      fi
+    EOT
+  }
+}
+
 output "data_collectors" {
   description = "The newly created Apigee Data Collectors (excludes already existing ones)."
   value = {
