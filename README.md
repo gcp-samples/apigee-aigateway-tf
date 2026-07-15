@@ -1,5 +1,5 @@
 # Apigee AI Gateway Terraform Template
-This is a basic Apigee AI Gateway Terraform template that can be easily tested and customized. This is not mean for production deployments, but rather just for sandbox, lab or test deployments.
+This is a basic Apigee AI Gateway Terraform template that can be easily tested and customized. This is not meant for production deployments, but rather as a sample for customization & learning.
 
 ## Resources created
 * Apigee org and instance in the chosen GCP project and region.
