@@ -226,7 +226,7 @@ resource "google_compute_region_network_endpoint_group" "apigee_psc_neg" {
 
 resource "google_compute_backend_service" "apigee_backend" {
   name                  = "apigee-psc-backend"
-  project            = var.project_id
+  project               = var.project_id
   load_balancing_scheme = "EXTERNAL_MANAGED"
   protocol              = "HTTPS"
   timeout_sec           = 600

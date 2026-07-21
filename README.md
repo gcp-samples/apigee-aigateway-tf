@@ -11,7 +11,7 @@ This is a basic Apigee AI Gateway Terraform template that can be easily tested a
 ## Deploy
 Run these commands to initialize and apply the terraform template in your sandbox project.
 
-These **optional parameters** can be added to the `apply` command to customize the deployment.
+These **optional parameters** can be added to the `apply` command to customize the deployment. Apigee DRZ location (us,eu, or in) documentation can be found [here](https://docs.cloud.google.com/apigee/docs/api-platform/get-started/drz-concepts).
 * **--var "drz_location=$APIGEE_DRZ_LOCATION"**
 * **--var "apigee_type=$APIGEE_TYPE"**
 * **--var "network=$APIGEE_VPC_NAME"**
