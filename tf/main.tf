@@ -151,6 +151,7 @@ resource "google_project_service" "enabled_apis" {
 
 resource "google_compute_network" "auto_vpc" {
   name                    = "default"
+  project            = var.project_id
   count                   = var.network == "" ? 1 : 0
   auto_create_subnetworks = true
   routing_mode            = "REGIONAL"
@@ -160,6 +161,7 @@ resource "google_compute_network" "auto_vpc" {
 data "google_compute_network" "existing_network" {
   count      = (var.network != "") ? 1 : 0
   name       = var.network
+  project            = var.project_id
   depends_on = [google_project_service.enabled_apis]
 }
 
@@ -173,6 +175,7 @@ data "google_compute_subnetwork" "existing_subnet" {
 
 resource "google_compute_global_address" "external_vip" {
   name         = "apigee-external-vip"
+  project            = var.project_id
   address_type = "EXTERNAL"
   ip_version   = "IPV4"
   depends_on   = [google_project_service.enabled_apis]
@@ -180,7 +183,7 @@ resource "google_compute_global_address" "external_vip" {
 
 resource "google_compute_managed_ssl_certificate" "nip_io_cert" {
   name = "apigee-nip-io-cert"
-
+  project = var.project_id
   managed {
     domains = ["${google_compute_global_address.external_vip.address}.nip.io"]
   }
@@ -215,6 +218,7 @@ resource "google_apigee_instance" "apigee" {
 resource "google_compute_region_network_endpoint_group" "apigee_psc_neg" {
   name                  = "apigee-psc-neg"
   region                = var.region
+  project               = var.project_id
   network_endpoint_type = "PRIVATE_SERVICE_CONNECT"
   psc_target_service    = google_apigee_instance.apigee.service_attachment
   network               = local.network_id
@@ -222,6 +226,7 @@ resource "google_compute_region_network_endpoint_group" "apigee_psc_neg" {
 
 resource "google_compute_backend_service" "apigee_backend" {
   name                  = "apigee-psc-backend"
+  project            = var.project_id
   load_balancing_scheme = "EXTERNAL_MANAGED"
   protocol              = "HTTPS"
   timeout_sec           = 600
